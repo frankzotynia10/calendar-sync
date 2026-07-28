@@ -283,6 +283,57 @@
     background: #e04a4a;
   }
 
+  /* "Up next" highlight - the single soonest upcoming timed event */
+  .tg-event.is-next {
+    box-shadow: 0 0 0 2px #ffffff, 0 0 10px rgba(255, 255, 255, 0.5);
+    z-index: 2;
+  }
+
+  .agenda-row.is-next .agenda-title {
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .agenda-row.is-next .agenda-time {
+    color: #ffffff;
+  }
+
+  .agenda-row.is-next {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+  }
+
+  /* ===================== SCREENSAVER (overnight idle) ===================== */
+  #screensaver {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  #screensaver.is-active {
+    display: flex;
+  }
+
+  #screensaver-clock {
+    font-size: 72px;
+    font-weight: 300;
+    color: #3a3a3a;
+  }
+
+  #screensaver-date {
+    font-size: 20px;
+    color: #2a2a2a;
+    margin-top: 8px;
+  }
+
   /* ===================== Breakpoints ===================== */
 
   /* Mobile: agenda list only */
@@ -316,6 +367,11 @@
 
 <div id="livetrack-view">
   <iframe id="livetrack-frame" src=""></iframe>
+</div>
+
+<div id="screensaver">
+  <div id="screensaver-clock">--:--</div>
+  <div id="screensaver-date">Loading...</div>
 </div>
 
 <script>
@@ -479,6 +535,40 @@
     return days;
   }
 
+  // Identifies the single soonest upcoming timed event (across all loaded
+  // events, not just the visible window) so it can be visually highlighted
+  // as "up next" in both the time grid and the agenda view.
+  var NEXT_EVENT_KEY = null;
+
+  function eventKey(ev) {
+    return ev.source_cal + "|" + ev.start_time;
+  }
+
+  function computeNextEventKey(events) {
+    var now = new Date();
+    var best = null;
+    var bestTime = null;
+
+    for (var i = 0; i < events.length; i++) {
+      var ev = events[i];
+      if (ev.all_day) { continue; }
+
+      var start = new Date(ev.start_time);
+      if (start >= now) {
+        if (best === null || start < bestTime) {
+          best = ev;
+          bestTime = start;
+        }
+      }
+    }
+
+    return best ? eventKey(best) : null;
+  }
+
+  function isNextEvent(ev) {
+    return NEXT_EVENT_KEY !== null && eventKey(ev) === NEXT_EVENT_KEY;
+  }
+
   // Assigns column index + column count (for overlap-safe width division)
   // to each timed event within a single day.
   function layoutDayEvents(rawEvents) {
@@ -505,6 +595,7 @@
       events.push({
         source_cal: ev.source_cal,
         title: ev.title,
+        start_time: ev.start_time,
         startHour: s.hour,
         startMinute: s.minute,
         startMin: startMin,
@@ -580,7 +671,7 @@
       var meta = metaFor(ev.source_cal);
 
       var block = document.createElement("div");
-      block.className = "tg-event";
+      block.className = "tg-event" + (isNextEvent(ev) ? " is-next" : "");
       block.style.top = (ev.startMin * PX_PER_MIN) + "px";
       block.style.height = ((ev.endMin - ev.startMin) * PX_PER_MIN - 1) + "px";
 
@@ -748,7 +839,7 @@
           var meta = metaFor(ev.source_cal);
 
           var row = document.createElement("div");
-          row.className = "agenda-row";
+          row.className = "agenda-row" + (isNextEvent(ev) ? " is-next" : "");
 
           var dot = document.createElement("div");
           dot.className = "agenda-dot";
@@ -782,6 +873,7 @@
 
   function renderAll(events) {
     lastEvents = events;
+    NEXT_EVENT_KEY = computeNextEventKey(events);
     renderTimeGrid(events);
     renderAgenda(events);
   }
@@ -852,6 +944,67 @@
 
   window.addEventListener("resize", handleResize);
 
+  // ===================== SCREENSAVER (overnight idle) =====================
+  // Active window: 9:00 PM through 5:30 AM Eastern. Outside that window
+  // the screensaver never triggers, no matter how idle the display is.
+  var NIGHT_START_MIN = 21 * 60;       // 9:00 PM
+  var NIGHT_END_MIN = 5 * 60 + 30;     // 5:30 AM
+  var IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+  var lastInteraction = Date.now();
+  var screensaverActive = false;
+
+  function isNightWindow() {
+    var hm = easternHourMinute(new Date());
+    var totalMin = hm.hour * 60 + hm.minute;
+    // Window wraps midnight: true if at/after 9PM OR before 5:30AM
+    return (totalMin >= NIGHT_START_MIN) || (totalMin < NIGHT_END_MIN);
+  }
+
+  function showScreensaver() {
+    if (screensaverActive) { return; }
+    screensaverActive = true;
+    document.getElementById("screensaver").className = "is-active";
+  }
+
+  function hideScreensaver() {
+    if (!screensaverActive) { return; }
+    screensaverActive = false;
+    document.getElementById("screensaver").className = "";
+  }
+
+  function updateScreensaverClock() {
+    var now = new Date();
+    document.getElementById("screensaver-clock").textContent = now.toLocaleTimeString("en-US", {
+      timeZone: "America/New_York",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+    document.getElementById("screensaver-date").textContent = now.toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      weekday: "long",
+      month: "long",
+      day: "numeric"
+    });
+  }
+
+  function registerInteraction() {
+    lastInteraction = Date.now();
+    if (screensaverActive) { hideScreensaver(); }
+  }
+
+  document.addEventListener("touchstart", registerInteraction);
+  document.addEventListener("mousedown", registerInteraction);
+  document.addEventListener("keydown", registerInteraction);
+
+  function checkIdleForScreensaver() {
+    if (screensaverActive) { return; }
+    if (currentlyShowingLiveTrack) { return; } // never screensaver over an active LiveTrack session
+    if (isNightWindow() && (Date.now() - lastInteraction) > IDLE_TIMEOUT_MS) {
+      showScreensaver();
+    }
+  }
+
   // Initial load
   updateClock();
   fetchCalendarMeta(function () {
@@ -865,6 +1018,8 @@
   setInterval(fetchEvents, 5 * 60 * 1000);
   setInterval(fetchLiveTrack, 30 * 1000);
   setInterval(tickNowLine, 60 * 1000);
+  setInterval(updateScreensaverClock, 1000);
+  setInterval(checkIdleForScreensaver, 15 * 1000);
 </script>
 
 </body>
