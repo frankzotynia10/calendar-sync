@@ -203,19 +203,34 @@
   // coalescing, no arrow-function class fields) to stay compatible with
   // Safari 12 on older iPads.
 
-  var SOURCE_META = {
-    fz_o365:   { color: "#4a90d9", label: "Frank - Work" },
-    cz_o365:   { color: "#d94a90", label: "Christina - Work" },
-    fz_google: { color: "#4ad97a", label: "Frank - Personal" }
-  };
-
+  // Populated from /api/calendar-meta on load - see fetchCalendarMeta()
+  var SOURCE_META = {};
   var DEFAULT_META = { color: "#999999", label: "Other" };
+  var calendarMetaLoaded = false;
 
   function metaFor(sourceCal) {
     if (SOURCE_META.hasOwnProperty(sourceCal)) {
       return SOURCE_META[sourceCal];
     }
     return DEFAULT_META;
+  }
+
+  function fetchCalendarMeta(onDone) {
+    fetch("/api/calendar-meta")
+      .then(function (resp) { return resp.json(); })
+      .then(function (data) {
+        SOURCE_META = data.sources || {};
+        if (data["default"]) {
+          DEFAULT_META = data["default"];
+        }
+        calendarMetaLoaded = true;
+        if (onDone) { onDone(); }
+      })
+      .catch(function (err) {
+        console.log("calendar meta fetch failed", err);
+        calendarMetaLoaded = true;
+        if (onDone) { onDone(); }
+      });
   }
 
   function easternDateKey(dateObj) {
@@ -240,7 +255,7 @@
     var legendEl = document.getElementById("legend");
     legendEl.innerHTML = "";
 
-    var keys = ["fz_o365", "cz_o365", "fz_google"];
+    var keys = Object.keys(SOURCE_META);
     for (var i = 0; i < keys.length; i++) {
       var meta = SOURCE_META[keys[i]];
 
@@ -424,10 +439,13 @@
       .catch(function (err) { console.log("livetrack fetch failed", err); });
   }
 
-  // Initial load
-  buildLegend();
+  // Initial load - meta must load before legend/events render so
+  // labels and colors are correct on first paint
   updateClock();
-  fetchEvents();
+  fetchCalendarMeta(function () {
+    buildLegend();
+    fetchEvents();
+  });
   fetchLiveTrack();
 
   // Refresh intervals
