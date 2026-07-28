@@ -6,3 +6,12 @@ services:
     env_file:
       - /mnt/user/appdata/calendar-sync/.env
     command: tail -f /dev/null
+
+  dashboard:
+    image: ghcr.io/frankzotynia10/dashboard:latest
+    container_name: dashboard
+    restart: unless-stopped
+    env_file:
+      - /mnt/user/appdata/dashboard/.env
+    ports:
+      - "8080:8080"
