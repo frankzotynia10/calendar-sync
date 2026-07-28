@@ -139,13 +139,13 @@
   }
 
   .tg-inner {
-    min-width: 760px;
+    min-width: 480px;
     position: relative;
   }
 
   .tg-row {
     display: grid;
-    grid-template-columns: 46px repeat(7, 1fr);
+    grid-template-columns: 46px repeat(3, 1fr);
   }
 
   .tg-header-row {
@@ -327,6 +327,8 @@
   var TOTAL_MIN = (END_HOUR - START_HOUR) * 60;
   var TOTAL_HEIGHT = TOTAL_MIN * PX_PER_MIN;
 
+  var DAYS_TO_SHOW = 3;
+
   var SOURCE_META = {};
   var DEFAULT_META = { color: "#999999", label: "Other" };
 
@@ -424,12 +426,12 @@
     });
   }
 
-  // Builds 7 day buckets: today (Eastern) through +6 days
+  // Builds DAYS_TO_SHOW day buckets: today (Eastern) through +N-1 days
   function buildWeekDays() {
     var days = [];
     var now = new Date();
 
-    for (var i = 0; i < 7; i++) {
+    for (var i = 0; i < DAYS_TO_SHOW; i++) {
       var d = new Date(now.getTime());
       d.setUTCDate(d.getUTCDate() + i);
 
