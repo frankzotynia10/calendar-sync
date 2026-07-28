@@ -22,8 +22,7 @@
   #calendar-view {
     display: block;
     width: 100%;
-    min-height: 100%;
-    padding: 20px;
+    height: 100%;
   }
 
   #livetrack-view {
@@ -38,119 +37,92 @@
     border: none;
   }
 
-  .header-row {
+  .top-bar {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     flex-wrap: wrap;
-    margin-bottom: 14px;
+    padding: 14px 16px 10px 16px;
   }
 
   h1 {
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 600;
     margin: 0;
   }
 
   .clock {
-    font-size: 15px;
+    font-size: 14px;
     color: #999999;
   }
 
-  /* Legend */
   .legend {
     display: flex;
     flex-wrap: wrap;
     gap: 14px;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
+    padding: 0 16px 12px 16px;
     border-bottom: 1px solid #2a2a2a;
   }
 
   .legend-item {
     display: flex;
     align-items: center;
-    font-size: 13px;
+    font-size: 12px;
     color: #bbbbbb;
   }
 
   .legend-dot {
-    width: 9px;
-    height: 9px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    margin-right: 6px;
+    margin-right: 5px;
     flex-shrink: 0;
   }
 
-  /* Week grid - desktop default: 7 columns */
-  .week-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
+  /* ===================== AGENDA (mobile fallback) ===================== */
+  #agenda-view {
+    display: none;
+    padding: 16px;
   }
 
-  .day-column {
-    background: #1a1a1a;
-    border-radius: 8px;
-    padding: 10px;
-    min-height: 120px;
+  .day-group {
+    margin-bottom: 22px;
   }
 
-  .day-column-header {
-    font-size: 13px;
+  .day-heading {
+    font-size: 16px;
     font-weight: 600;
-    color: #dddddd;
+    color: #cccccc;
     border-bottom: 1px solid #333333;
     padding-bottom: 6px;
     margin-bottom: 8px;
   }
 
-  .day-column-header.is-today {
-    color: #ffffff;
-  }
-
-  .day-column-header .weekday {
-    display: block;
-  }
-
-  .day-column-header .date-num {
-    display: block;
-    color: #888888;
-    font-weight: 400;
-    font-size: 12px;
-  }
-
-  .event-row {
+  .agenda-row {
     display: flex;
     align-items: flex-start;
-    padding: 4px 0;
-    font-size: 12.5px;
-    line-height: 1.3;
+    padding: 5px 0;
+    font-size: 14px;
   }
 
-  .event-dot {
-    width: 7px;
-    height: 7px;
+  .agenda-dot {
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    margin-right: 6px;
-    margin-top: 4px;
+    margin-right: 8px;
+    margin-top: 5px;
     flex-shrink: 0;
   }
 
-  .event-text {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .event-time {
+  .agenda-time {
+    width: 80px;
+    flex-shrink: 0;
     color: #999999;
-    font-size: 11px;
-    display: block;
+    font-size: 12px;
   }
 
-  .event-title {
-    color: #f2f2f2;
-    word-wrap: break-word;
+  .agenda-title {
+    flex: 1;
   }
 
   .empty-state {
@@ -158,40 +130,185 @@
     font-size: 12px;
   }
 
-  /* iPad breakpoint: 4 columns, wraps to 2 rows for a 7-day week */
-  @media (max-width: 1023px) and (min-width: 768px) {
-    .week-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
+  /* ===================== TIME GRID (tablet/desktop) ===================== */
+  #timegrid-view {
+    display: none;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    height: calc(100% - 96px);
   }
 
-  /* Mobile breakpoint: single column, stacked agenda */
+  .tg-inner {
+    min-width: 760px;
+    position: relative;
+  }
+
+  .tg-row {
+    display: grid;
+    grid-template-columns: 46px repeat(7, 1fr);
+  }
+
+  .tg-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #111111;
+    border-bottom: 1px solid #333333;
+  }
+
+  .tg-allday-row {
+    position: sticky;
+    top: 34px;
+    z-index: 2;
+    background: #111111;
+    border-bottom: 1px solid #2a2a2a;
+    min-height: 20px;
+  }
+
+  .tg-gutter-cell {
+    /* empty spacer above the time gutter, aligns with day headers */
+  }
+
+  .tg-day-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #cccccc;
+    text-align: center;
+    padding: 6px 2px;
+  }
+
+  .tg-day-header.is-today {
+    color: #ffffff;
+    background: #1c2733;
+  }
+
+  .tg-day-header .dow {
+    display: block;
+  }
+
+  .tg-day-header .dnum {
+    display: block;
+    font-weight: 400;
+    color: #888888;
+    font-size: 11px;
+  }
+
+  .tg-day-header.is-today .dnum {
+    color: #bbbbbb;
+  }
+
+  .tg-allday-cell {
+    padding: 2px 3px;
+  }
+
+  .tg-allday-chip {
+    font-size: 9.5px;
+    color: #ffffff;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-bottom: 2px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .tg-body-row {
+    position: relative;
+  }
+
+  .tg-gutter {
+    position: relative;
+  }
+
+  .tg-hour-label {
+    position: absolute;
+    left: 0;
+    right: 4px;
+    text-align: right;
+    font-size: 10px;
+    color: #777777;
+    transform: translateY(-6px);
+  }
+
+  .tg-day-col {
+    position: relative;
+    border-left: 1px solid #232323;
+    background-image: linear-gradient(to bottom, #232323 1px, transparent 1px);
+  }
+
+  .tg-day-col.is-today {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  .tg-event {
+    position: absolute;
+    border-radius: 4px;
+    padding: 2px 4px;
+    overflow: hidden;
+    font-size: 10.5px;
+    line-height: 1.25;
+    color: #ffffff;
+  }
+
+  .tg-event .tg-event-time {
+    display: block;
+    font-size: 9px;
+    opacity: 0.85;
+  }
+
+  .tg-event .tg-event-title {
+    display: block;
+    font-weight: 600;
+    word-wrap: break-word;
+  }
+
+  .tg-now-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    border-top: 1px solid #e04a4a;
+    z-index: 1;
+  }
+
+  .tg-now-dot {
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e04a4a;
+  }
+
+  /* ===================== Breakpoints ===================== */
+
+  /* Mobile: agenda list only */
   @media (max-width: 767px) {
-    .week-grid {
-      grid-template-columns: 1fr;
-    }
+    #timegrid-view { display: none !important; }
+    #agenda-view { display: block !important; }
+    h1 { font-size: 20px; }
+  }
 
-    .day-column {
-      min-height: unset;
-    }
-
-    h1 {
-      font-size: 22px;
-    }
+  /* Tablet/desktop: time grid */
+  @media (min-width: 768px) {
+    #timegrid-view { display: block !important; }
+    #agenda-view { display: none !important; }
   }
 </style>
 </head>
 <body>
 
 <div id="calendar-view">
-  <div class="header-row">
+  <div class="top-bar">
     <h1 id="today-heading">Loading...</h1>
     <div class="clock" id="clock"></div>
   </div>
 
   <div class="legend" id="legend"></div>
 
-  <div class="week-grid" id="week-grid"></div>
+  <div id="timegrid-view"></div>
+  <div id="agenda-view"></div>
 </div>
 
 <div id="livetrack-view">
@@ -200,13 +317,18 @@
 
 <script>
   // Deliberately conservative JS below (no optional chaining, no nullish
-  // coalescing, no arrow-function class fields) to stay compatible with
-  // Safari 12 on older iPads.
+  // coalescing, no arrow-function class fields, no formatToParts) to stay
+  // compatible with Safari 12 on older iPads.
 
-  // Populated from /api/calendar-meta on load - see fetchCalendarMeta()
+  var START_HOUR = 6;   // grid starts at 6 AM
+  var END_HOUR = 23;    // grid ends at 11 PM
+  var PX_PER_HOUR = 60;
+  var PX_PER_MIN = PX_PER_HOUR / 60;
+  var TOTAL_MIN = (END_HOUR - START_HOUR) * 60;
+  var TOTAL_HEIGHT = TOTAL_MIN * PX_PER_MIN;
+
   var SOURCE_META = {};
   var DEFAULT_META = { color: "#999999", label: "Other" };
-  var calendarMetaLoaded = false;
 
   function metaFor(sourceCal) {
     if (SOURCE_META.hasOwnProperty(sourceCal)) {
@@ -220,15 +342,11 @@
       .then(function (resp) { return resp.json(); })
       .then(function (data) {
         SOURCE_META = data.sources || {};
-        if (data["default"]) {
-          DEFAULT_META = data["default"];
-        }
-        calendarMetaLoaded = true;
+        if (data["default"]) { DEFAULT_META = data["default"]; }
         if (onDone) { onDone(); }
       })
       .catch(function (err) {
         console.log("calendar meta fetch failed", err);
-        calendarMetaLoaded = true;
         if (onDone) { onDone(); }
       });
   }
@@ -242,13 +360,28 @@
     });
   }
 
-  function formatTime(isoString) {
-    var d = new Date(isoString);
-    return d.toLocaleString("en-US", {
+  // Returns {hour, minute} in Eastern time, avoiding formatToParts for
+  // broader old-Safari compatibility.
+  function easternHourMinute(dateObj) {
+    var s = dateObj.toLocaleTimeString("en-US", {
       timeZone: "America/New_York",
-      hour: "numeric",
+      hour12: false,
+      hour: "2-digit",
       minute: "2-digit"
     });
+    var parts = s.split(":");
+    var hour = parseInt(parts[0], 10);
+    var minute = parseInt(parts[1], 10);
+    if (hour === 24) { hour = 0; }
+    return { hour: hour, minute: minute };
+  }
+
+  function formatTime12h(hour, minute) {
+    var h = hour % 12;
+    if (h === 0) { h = 12; }
+    var ampm = hour < 12 ? "AM" : "PM";
+    var mm = minute < 10 ? "0" + minute : "" + minute;
+    return h + ":" + mm + " " + ampm;
   }
 
   function buildLegend() {
@@ -277,17 +410,13 @@
 
   function updateClock() {
     var now = new Date();
-    var clockEl = document.getElementById("clock");
-    var headingEl = document.getElementById("today-heading");
-
-    clockEl.textContent = now.toLocaleTimeString("en-US", {
+    document.getElementById("clock").textContent = now.toLocaleTimeString("en-US", {
       timeZone: "America/New_York",
       hour: "numeric",
       minute: "2-digit",
       second: "2-digit"
     });
-
-    headingEl.textContent = now.toLocaleDateString("en-US", {
+    document.getElementById("today-heading").textContent = now.toLocaleDateString("en-US", {
       timeZone: "America/New_York",
       weekday: "long",
       month: "long",
@@ -295,7 +424,7 @@
     });
   }
 
-  // Builds the 7 day buckets: today (Eastern) through +6 days
+  // Builds 7 day buckets: today (Eastern) through +6 days
   function buildWeekDays() {
     var days = [];
     var now = new Date();
@@ -308,100 +437,335 @@
       var weekday = d.toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "short" });
       var dateNum = d.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
 
-      days.push({ key: key, weekday: weekday, dateNum: dateNum, events: [] });
+      days.push({ key: key, weekday: weekday, dateNum: dateNum, timed: [], allDay: [] });
     }
-
     return days;
   }
 
-  function renderWeek(events) {
-    var grid = document.getElementById("week-grid");
-    grid.innerHTML = "";
-
+  function bucketEvents(events) {
     var days = buildWeekDays();
-    var todayKey = days[0].key;
-
     var byKey = {};
-    for (var i = 0; i < days.length; i++) {
-      byKey[days[i].key] = days[i];
-    }
+    for (var i = 0; i < days.length; i++) { byKey[days[i].key] = days[i]; }
 
     for (var e = 0; e < events.length; e++) {
       var ev = events[e];
-      var evDate = new Date(ev.start_time);
-      var evKey = easternDateKey(evDate);
+      var evKey = easternDateKey(new Date(ev.start_time));
+      if (!byKey.hasOwnProperty(evKey)) { continue; }
 
-      if (byKey.hasOwnProperty(evKey)) {
-        byKey[evKey].events.push(ev);
+      if (ev.all_day) {
+        byKey[evKey].allDay.push(ev);
+      } else {
+        byKey[evKey].timed.push(ev);
       }
     }
+    return days;
+  }
+
+  // Assigns column index + column count (for overlap-safe width division)
+  // to each timed event within a single day.
+  function layoutDayEvents(rawEvents) {
+    var events = [];
+    for (var i = 0; i < rawEvents.length; i++) {
+      var ev = rawEvents[i];
+      var s = easternHourMinute(new Date(ev.start_time));
+      var startMin = (s.hour - START_HOUR) * 60 + s.minute;
+
+      var endMin;
+      if (ev.end_time) {
+        var eObj = easternHourMinute(new Date(ev.end_time));
+        endMin = (eObj.hour - START_HOUR) * 60 + eObj.minute;
+      } else {
+        endMin = startMin + 30;
+      }
+
+      if (endMin <= startMin) { endMin = startMin + 30; }
+
+      startMin = Math.max(0, Math.min(startMin, TOTAL_MIN));
+      endMin = Math.max(0, Math.min(endMin, TOTAL_MIN));
+      if (endMin - startMin < 15) { endMin = startMin + 15; }
+
+      events.push({
+        source_cal: ev.source_cal,
+        title: ev.title,
+        startHour: s.hour,
+        startMinute: s.minute,
+        startMin: startMin,
+        endMin: endMin,
+        col: 0,
+        colCount: 1
+      });
+    }
+
+    events.sort(function (a, b) {
+      if (a.startMin !== b.startMin) { return a.startMin - b.startMin; }
+      return a.endMin - b.endMin;
+    });
+
+    var columns = [];
+    for (var j = 0; j < events.length; j++) {
+      var ev2 = events[j];
+      var placed = false;
+      for (var c = 0; c < columns.length; c++) {
+        if (columns[c] <= ev2.startMin) {
+          ev2.col = c;
+          columns[c] = ev2.endMin;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        ev2.col = columns.length;
+        columns.push(ev2.endMin);
+      }
+    }
+
+    for (var k = 0; k < events.length; k++) {
+      var e1 = events[k];
+      var maxCol = e1.col;
+      for (var m = 0; m < events.length; m++) {
+        var e2 = events[m];
+        if (e2.startMin < e1.endMin && e2.endMin > e1.startMin) {
+          if (e2.col > maxCol) { maxCol = e2.col; }
+        }
+      }
+      e1.colCount = maxCol + 1;
+    }
+
+    return events;
+  }
+
+  function buildHourGutter() {
+    var gutter = document.createElement("div");
+    gutter.className = "tg-gutter";
+    gutter.style.height = TOTAL_HEIGHT + "px";
+
+    for (var h = START_HOUR; h <= END_HOUR; h++) {
+      var label = document.createElement("div");
+      label.className = "tg-hour-label";
+      label.style.top = ((h - START_HOUR) * PX_PER_HOUR) + "px";
+      label.textContent = formatTime12h(h, 0).replace(":00", "");
+      gutter.appendChild(label);
+    }
+    return gutter;
+  }
+
+  function buildDayColumn(day, isToday) {
+    var col = document.createElement("div");
+    col.className = "tg-day-col" + (isToday ? " is-today" : "");
+    col.style.height = TOTAL_HEIGHT + "px";
+    col.style.backgroundSize = "100% " + (PX_PER_HOUR / 2) + "px";
+
+    var laidOut = layoutDayEvents(day.timed);
+
+    for (var i = 0; i < laidOut.length; i++) {
+      var ev = laidOut[i];
+      var meta = metaFor(ev.source_cal);
+
+      var block = document.createElement("div");
+      block.className = "tg-event";
+      block.style.top = (ev.startMin * PX_PER_MIN) + "px";
+      block.style.height = ((ev.endMin - ev.startMin) * PX_PER_MIN - 1) + "px";
+
+      var widthPct = 100 / ev.colCount;
+      var leftPct = ev.col * widthPct;
+      block.style.left = leftPct + "%";
+      block.style.width = (widthPct - 1) + "%";
+      block.style.backgroundColor = meta.color;
+
+      var timeEl = document.createElement("span");
+      timeEl.className = "tg-event-time";
+      timeEl.textContent = formatTime12h(ev.startHour, ev.startMinute);
+
+      var titleEl = document.createElement("span");
+      titleEl.className = "tg-event-title";
+      titleEl.textContent = ev.title ? ev.title : "(untitled)";
+
+      block.appendChild(timeEl);
+      block.appendChild(titleEl);
+      col.appendChild(block);
+    }
+
+    if (isToday) {
+      var nowE = easternHourMinute(new Date());
+      var nowMin = (nowE.hour - START_HOUR) * 60 + nowE.minute;
+      if (nowMin >= 0 && nowMin <= TOTAL_MIN) {
+        var nowLine = document.createElement("div");
+        nowLine.className = "tg-now-line";
+        nowLine.style.top = (nowMin * PX_PER_MIN) + "px";
+        var nowDot = document.createElement("div");
+        nowDot.className = "tg-now-dot";
+        nowLine.appendChild(nowDot);
+        col.appendChild(nowLine);
+      }
+    }
+
+    return col;
+  }
+
+  function renderTimeGrid(events) {
+    var container = document.getElementById("timegrid-view");
+    var prevScroll = container.scrollTop;
+    var alreadyScrolled = container.hasAttribute("data-scrolled");
+    container.innerHTML = "";
+
+    var days = bucketEvents(events);
+    var todayKey = days[0].key;
+
+    var inner = document.createElement("div");
+    inner.className = "tg-inner";
+
+    // Header row (weekday + date per day)
+    var headerRow = document.createElement("div");
+    headerRow.className = "tg-row tg-header-row";
+    headerRow.appendChild(document.createElement("div")).className = "tg-gutter-cell";
+
+    for (var i = 0; i < days.length; i++) {
+      var day = days[i];
+      var isToday = day.key === todayKey;
+
+      var headerCell = document.createElement("div");
+      headerCell.className = "tg-day-header" + (isToday ? " is-today" : "");
+
+      var dow = document.createElement("span");
+      dow.className = "dow";
+      dow.textContent = isToday ? "Today" : day.weekday;
+
+      var dnum = document.createElement("span");
+      dnum.className = "dnum";
+      dnum.textContent = day.dateNum;
+
+      headerCell.appendChild(dow);
+      headerCell.appendChild(dnum);
+      headerRow.appendChild(headerCell);
+    }
+    inner.appendChild(headerRow);
+
+    // All-day strip
+    var alldayRow = document.createElement("div");
+    alldayRow.className = "tg-row tg-allday-row";
+    alldayRow.appendChild(document.createElement("div")).className = "tg-gutter-cell";
+
+    for (var j = 0; j < days.length; j++) {
+      var dayA = days[j];
+      var cell = document.createElement("div");
+      cell.className = "tg-allday-cell";
+
+      for (var a = 0; a < dayA.allDay.length; a++) {
+        var adEv = dayA.allDay[a];
+        var meta = metaFor(adEv.source_cal);
+        var chip = document.createElement("div");
+        chip.className = "tg-allday-chip";
+        chip.style.backgroundColor = meta.color;
+        chip.textContent = adEv.title ? adEv.title : "(untitled)";
+        cell.appendChild(chip);
+      }
+      alldayRow.appendChild(cell);
+    }
+    inner.appendChild(alldayRow);
+
+    // Time-grid body
+    var bodyRow = document.createElement("div");
+    bodyRow.className = "tg-row tg-body-row";
+    bodyRow.appendChild(buildHourGutter());
+
+    for (var d = 0; d < days.length; d++) {
+      var isTodayCol = days[d].key === todayKey;
+      bodyRow.appendChild(buildDayColumn(days[d], isTodayCol));
+    }
+    inner.appendChild(bodyRow);
+
+    container.appendChild(inner);
+
+    // First render only: auto-scroll to a sensible starting hour.
+    // Subsequent re-renders (data refresh, now-line tick) preserve
+    // whatever scroll position was already there.
+    if (!alreadyScrolled) {
+      var scrollToHour = 7;
+      container.scrollTop = Math.max(0, (scrollToHour - START_HOUR) * PX_PER_HOUR - 20);
+      container.setAttribute("data-scrolled", "true");
+    } else {
+      container.scrollTop = prevScroll;
+    }
+  }
+
+  function renderAgenda(events) {
+    var container = document.getElementById("agenda-view");
+    container.innerHTML = "";
+
+    var days = bucketEvents(events);
+    var todayKey = days[0].key;
 
     for (var d = 0; d < days.length; d++) {
       var day = days[d];
+      var allEvents = day.allDay.concat(day.timed);
 
-      var col = document.createElement("div");
-      col.className = "day-column";
+      var group = document.createElement("div");
+      group.className = "day-group";
 
-      var header = document.createElement("div");
-      header.className = "day-column-header" + (day.key === todayKey ? " is-today" : "");
+      var heading = document.createElement("div");
+      heading.className = "day-heading";
+      heading.textContent = (day.key === todayKey ? "Today - " : "") + day.weekday + " " + day.dateNum;
+      group.appendChild(heading);
 
-      var weekdayEl = document.createElement("span");
-      weekdayEl.className = "weekday";
-      weekdayEl.textContent = day.key === todayKey ? "Today" : day.weekday;
-
-      var dateEl = document.createElement("span");
-      dateEl.className = "date-num";
-      dateEl.textContent = day.dateNum;
-
-      header.appendChild(weekdayEl);
-      header.appendChild(dateEl);
-      col.appendChild(header);
-
-      if (day.events.length === 0) {
+      if (allEvents.length === 0) {
         var empty = document.createElement("div");
         empty.className = "empty-state";
-        empty.textContent = "\u2014";
-        col.appendChild(empty);
+        empty.textContent = "Nothing scheduled.";
+        group.appendChild(empty);
       } else {
-        for (var j = 0; j < day.events.length; j++) {
-          var ev2 = day.events[j];
-          var meta = metaFor(ev2.source_cal);
+        allEvents.sort(function (a, b) {
+          if (a.all_day && !b.all_day) { return -1; }
+          if (!a.all_day && b.all_day) { return 1; }
+          return new Date(a.start_time) - new Date(b.start_time);
+        });
+
+        for (var e = 0; e < allEvents.length; e++) {
+          var ev = allEvents[e];
+          var meta = metaFor(ev.source_cal);
 
           var row = document.createElement("div");
-          row.className = "event-row";
+          row.className = "agenda-row";
 
           var dot = document.createElement("div");
-          dot.className = "event-dot";
+          dot.className = "agenda-dot";
           dot.style.backgroundColor = meta.color;
 
-          var textWrap = document.createElement("div");
-          textWrap.className = "event-text";
+          var timeEl = document.createElement("div");
+          timeEl.className = "agenda-time";
+          if (ev.all_day) {
+            timeEl.textContent = "All day";
+          } else {
+            var hm = easternHourMinute(new Date(ev.start_time));
+            timeEl.textContent = formatTime12h(hm.hour, hm.minute);
+          }
 
-          var timeEl = document.createElement("span");
-          timeEl.className = "event-time";
-          timeEl.textContent = ev2.all_day ? "All day" : formatTime(ev2.start_time);
-
-          var titleEl = document.createElement("span");
-          titleEl.className = "event-title";
-          titleEl.textContent = ev2.title ? ev2.title : "(untitled)";
-
-          textWrap.appendChild(timeEl);
-          textWrap.appendChild(titleEl);
+          var titleEl = document.createElement("div");
+          titleEl.className = "agenda-title";
+          titleEl.textContent = ev.title ? ev.title : "(untitled)";
 
           row.appendChild(dot);
-          row.appendChild(textWrap);
-          col.appendChild(row);
+          row.appendChild(timeEl);
+          row.appendChild(titleEl);
+          group.appendChild(row);
         }
       }
 
-      grid.appendChild(col);
+      container.appendChild(group);
     }
+  }
+
+  var lastEvents = [];
+
+  function renderAll(events) {
+    lastEvents = events;
+    renderTimeGrid(events);
+    renderAgenda(events);
   }
 
   function fetchEvents() {
     fetch("/api/events")
       .then(function (resp) { return resp.json(); })
-      .then(function (data) { renderWeek(data.events); })
+      .then(function (data) { renderAll(data.events); })
       .catch(function (err) { console.log("events fetch failed", err); });
   }
 
@@ -439,8 +803,12 @@
       .catch(function (err) { console.log("livetrack fetch failed", err); });
   }
 
-  // Initial load - meta must load before legend/events render so
-  // labels and colors are correct on first paint
+  // Re-render the now-line position periodically without a full data refetch
+  function tickNowLine() {
+    renderTimeGrid(lastEvents);
+  }
+
+  // Initial load
   updateClock();
   fetchCalendarMeta(function () {
     buildLegend();
@@ -452,6 +820,7 @@
   setInterval(updateClock, 1000);
   setInterval(fetchEvents, 5 * 60 * 1000);
   setInterval(fetchLiveTrack, 30 * 1000);
+  setInterval(tickNowLine, 60 * 1000);
 </script>
 
 </body>
