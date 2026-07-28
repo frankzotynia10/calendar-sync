@@ -17,15 +17,13 @@
     background: #111111;
     color: #f2f2f2;
     font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
-    overflow: hidden;
   }
 
   #calendar-view {
     display: block;
     width: 100%;
-    height: 100%;
-    padding: 24px;
-    overflow-y: auto;
+    min-height: 100%;
+    padding: 20px;
   }
 
   #livetrack-view {
@@ -40,70 +38,160 @@
     border: none;
   }
 
+  .header-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
   h1 {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 600;
-    margin: 0 0 4px 0;
+    margin: 0;
   }
 
   .clock {
-    font-size: 16px;
+    font-size: 15px;
     color: #999999;
-    margin-bottom: 20px;
   }
 
-  .day-group {
-    margin-bottom: 24px;
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #2a2a2a;
   }
 
-  .day-heading {
-    font-size: 18px;
+  .legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #bbbbbb;
+  }
+
+  .legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+
+  /* Week grid - desktop default: 7 columns */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+  }
+
+  .day-column {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 120px;
+  }
+
+  .day-column-header {
+    font-size: 13px;
     font-weight: 600;
-    color: #cccccc;
+    color: #dddddd;
     border-bottom: 1px solid #333333;
     padding-bottom: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+  }
+
+  .day-column-header.is-today {
+    color: #ffffff;
+  }
+
+  .day-column-header .weekday {
+    display: block;
+  }
+
+  .day-column-header .date-num {
+    display: block;
+    color: #888888;
+    font-weight: 400;
+    font-size: 12px;
   }
 
   .event-row {
     display: flex;
-    align-items: baseline;
-    padding: 6px 0;
-    font-size: 17px;
-  }
-
-  .event-time {
-    width: 110px;
-    flex-shrink: 0;
-    color: #aaaaaa;
-    font-variant-numeric: tabular-nums;
+    align-items: flex-start;
+    padding: 4px 0;
+    font-size: 12.5px;
+    line-height: 1.3;
   }
 
   .event-dot {
-    width: 10px;
-    height: 10px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    margin-right: 10px;
+    margin-right: 6px;
+    margin-top: 4px;
     flex-shrink: 0;
   }
 
-  .event-title {
+  .event-text {
     flex: 1;
+    min-width: 0;
+  }
+
+  .event-time {
+    color: #999999;
+    font-size: 11px;
+    display: block;
+  }
+
+  .event-title {
+    color: #f2f2f2;
+    word-wrap: break-word;
   }
 
   .empty-state {
     color: #666666;
-    font-size: 16px;
-    margin-top: 20px;
+    font-size: 12px;
+  }
+
+  /* iPad breakpoint: 4 columns, wraps to 2 rows for a 7-day week */
+  @media (max-width: 1023px) and (min-width: 768px) {
+    .week-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  /* Mobile breakpoint: single column, stacked agenda */
+  @media (max-width: 767px) {
+    .week-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .day-column {
+      min-height: unset;
+    }
+
+    h1 {
+      font-size: 22px;
+    }
   }
 </style>
 </head>
 <body>
 
 <div id="calendar-view">
-  <h1 id="today-heading">Loading...</h1>
-  <div class="clock" id="clock"></div>
-  <div id="events-container"></div>
+  <div class="header-row">
+    <h1 id="today-heading">Loading...</h1>
+    <div class="clock" id="clock"></div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="week-grid" id="week-grid"></div>
 </div>
 
 <div id="livetrack-view">
@@ -115,19 +203,28 @@
   // coalescing, no arrow-function class fields) to stay compatible with
   // Safari 12 on older iPads.
 
-  var SOURCE_COLORS = {
-    fz_o365: "#4a90d9",
-    cz_o365: "#d94a90",
-    fz_google: "#4ad97a"
+  var SOURCE_META = {
+    fz_o365:   { color: "#4a90d9", label: "Frank - Work" },
+    cz_o365:   { color: "#d94a90", label: "Christina - Work" },
+    fz_google: { color: "#4ad97a", label: "Frank - Personal" }
   };
 
-  var DEFAULT_COLOR = "#999999";
+  var DEFAULT_META = { color: "#999999", label: "Other" };
 
-  function getColor(sourceCal) {
-    if (SOURCE_COLORS.hasOwnProperty(sourceCal)) {
-      return SOURCE_COLORS[sourceCal];
+  function metaFor(sourceCal) {
+    if (SOURCE_META.hasOwnProperty(sourceCal)) {
+      return SOURCE_META[sourceCal];
     }
-    return DEFAULT_COLOR;
+    return DEFAULT_META;
+  }
+
+  function easternDateKey(dateObj) {
+    return dateObj.toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
   }
 
   function formatTime(isoString) {
@@ -139,25 +236,28 @@
     });
   }
 
-  function formatDayHeading(dateObj) {
-    return dateObj.toLocaleDateString("en-US", {
-      timeZone: "America/New_York",
-      weekday: "long",
-      month: "long",
-      day: "numeric"
-    });
-  }
+  function buildLegend() {
+    var legendEl = document.getElementById("legend");
+    legendEl.innerHTML = "";
 
-  function dayKeyForEvent(isoString) {
-    var d = new Date(isoString);
-    // Use the Eastern-time calendar date as the grouping key
-    var parts = d.toLocaleDateString("en-US", {
-      timeZone: "America/New_York",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    });
-    return parts;
+    var keys = ["fz_o365", "cz_o365", "fz_google"];
+    for (var i = 0; i < keys.length; i++) {
+      var meta = SOURCE_META[keys[i]];
+
+      var item = document.createElement("div");
+      item.className = "legend-item";
+
+      var dot = document.createElement("div");
+      dot.className = "legend-dot";
+      dot.style.backgroundColor = meta.color;
+
+      var label = document.createElement("span");
+      label.textContent = meta.label;
+
+      item.appendChild(dot);
+      item.appendChild(label);
+      legendEl.appendChild(item);
+    }
   }
 
   function updateClock() {
@@ -172,78 +272,121 @@
       second: "2-digit"
     });
 
-    headingEl.textContent = formatDayHeading(now);
+    headingEl.textContent = now.toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      weekday: "long",
+      month: "long",
+      day: "numeric"
+    });
   }
 
-  function renderEvents(events) {
-    var container = document.getElementById("events-container");
-    container.innerHTML = "";
+  // Builds the 7 day buckets: today (Eastern) through +6 days
+  function buildWeekDays() {
+    var days = [];
+    var now = new Date();
 
-    if (events.length === 0) {
-      var empty = document.createElement("div");
-      empty.className = "empty-state";
-      empty.textContent = "Nothing on the calendar.";
-      container.appendChild(empty);
-      return;
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(now.getTime());
+      d.setUTCDate(d.getUTCDate() + i);
+
+      var key = easternDateKey(d);
+      var weekday = d.toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "short" });
+      var dateNum = d.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
+
+      days.push({ key: key, weekday: weekday, dateNum: dateNum, events: [] });
     }
 
-    var groups = {};
-    var order = [];
+    return days;
+  }
 
-    for (var i = 0; i < events.length; i++) {
-      var ev = events[i];
-      var key = dayKeyForEvent(ev.start_time);
-      if (!groups.hasOwnProperty(key)) {
-        groups[key] = [];
-        order.push(key);
-      }
-      groups[key].push(ev);
+  function renderWeek(events) {
+    var grid = document.getElementById("week-grid");
+    grid.innerHTML = "";
+
+    var days = buildWeekDays();
+    var todayKey = days[0].key;
+
+    var byKey = {};
+    for (var i = 0; i < days.length; i++) {
+      byKey[days[i].key] = days[i];
     }
 
-    for (var g = 0; g < order.length; g++) {
-      var dayKey = order[g];
-      var dayEvents = groups[dayKey];
+    for (var e = 0; e < events.length; e++) {
+      var ev = events[e];
+      var evDate = new Date(ev.start_time);
+      var evKey = easternDateKey(evDate);
 
-      var dayGroup = document.createElement("div");
-      dayGroup.className = "day-group";
+      if (byKey.hasOwnProperty(evKey)) {
+        byKey[evKey].events.push(ev);
+      }
+    }
 
-      var heading = document.createElement("div");
-      heading.className = "day-heading";
-      heading.textContent = formatDayHeading(new Date(dayEvents[0].start_time));
-      dayGroup.appendChild(heading);
+    for (var d = 0; d < days.length; d++) {
+      var day = days[d];
 
-      for (var j = 0; j < dayEvents.length; j++) {
-        var ev2 = dayEvents[j];
+      var col = document.createElement("div");
+      col.className = "day-column";
 
-        var row = document.createElement("div");
-        row.className = "event-row";
+      var header = document.createElement("div");
+      header.className = "day-column-header" + (day.key === todayKey ? " is-today" : "");
 
-        var timeEl = document.createElement("div");
-        timeEl.className = "event-time";
-        timeEl.textContent = ev2.all_day ? "All day" : formatTime(ev2.start_time);
+      var weekdayEl = document.createElement("span");
+      weekdayEl.className = "weekday";
+      weekdayEl.textContent = day.key === todayKey ? "Today" : day.weekday;
 
-        var dot = document.createElement("div");
-        dot.className = "event-dot";
-        dot.style.backgroundColor = getColor(ev2.source_cal);
+      var dateEl = document.createElement("span");
+      dateEl.className = "date-num";
+      dateEl.textContent = day.dateNum;
 
-        var titleEl = document.createElement("div");
-        titleEl.className = "event-title";
-        titleEl.textContent = ev2.title ? ev2.title : "(untitled)";
+      header.appendChild(weekdayEl);
+      header.appendChild(dateEl);
+      col.appendChild(header);
 
-        row.appendChild(timeEl);
-        row.appendChild(dot);
-        row.appendChild(titleEl);
-        dayGroup.appendChild(row);
+      if (day.events.length === 0) {
+        var empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "\u2014";
+        col.appendChild(empty);
+      } else {
+        for (var j = 0; j < day.events.length; j++) {
+          var ev2 = day.events[j];
+          var meta = metaFor(ev2.source_cal);
+
+          var row = document.createElement("div");
+          row.className = "event-row";
+
+          var dot = document.createElement("div");
+          dot.className = "event-dot";
+          dot.style.backgroundColor = meta.color;
+
+          var textWrap = document.createElement("div");
+          textWrap.className = "event-text";
+
+          var timeEl = document.createElement("span");
+          timeEl.className = "event-time";
+          timeEl.textContent = ev2.all_day ? "All day" : formatTime(ev2.start_time);
+
+          var titleEl = document.createElement("span");
+          titleEl.className = "event-title";
+          titleEl.textContent = ev2.title ? ev2.title : "(untitled)";
+
+          textWrap.appendChild(timeEl);
+          textWrap.appendChild(titleEl);
+
+          row.appendChild(dot);
+          row.appendChild(textWrap);
+          col.appendChild(row);
+        }
       }
 
-      container.appendChild(dayGroup);
+      grid.appendChild(col);
     }
   }
 
   function fetchEvents() {
     fetch("/api/events")
       .then(function (resp) { return resp.json(); })
-      .then(function (data) { renderEvents(data.events); })
+      .then(function (data) { renderWeek(data.events); })
       .catch(function (err) { console.log("events fetch failed", err); });
   }
 
@@ -282,6 +425,7 @@
   }
 
   // Initial load
+  buildLegend();
   updateClock();
   fetchEvents();
   fetchLiveTrack();
