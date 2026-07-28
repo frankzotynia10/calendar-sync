@@ -627,19 +627,29 @@
     });
   }
 
-  // Returns {hour, minute} in Eastern time, avoiding formatToParts for
-  // broader old-Safari compatibility.
+  // Returns {hour, minute} in Eastern time. Deliberately requests 12-hour
+  // format and converts manually, rather than requesting hour12:false -
+  // older Safari (iOS 12) has known Intl bugs where hour12:false isn't
+  // always honored, silently returning 12-hour strings instead. Since that
+  // caused PM times to be misread as their AM-equivalent hour (e.g. 3:15 PM
+  // read as hour=3), it could push isNightWindow() into false positives
+  // during the day. 12-hour + explicit AM/PM parsing avoids that class of
+  // bug entirely, since hour12:true is the universally well-supported path.
   function easternHourMinute(dateObj) {
     var s = dateObj.toLocaleTimeString("en-US", {
       timeZone: "America/New_York",
-      hour12: false,
-      hour: "2-digit",
+      hour12: true,
+      hour: "numeric",
       minute: "2-digit"
     });
-    var parts = s.split(":");
+    var isPM = /PM/i.test(s);
+    var isAM = /AM/i.test(s);
+    var cleaned = s.replace(/[AP]M/i, "").trim();
+    var parts = cleaned.split(":");
     var hour = parseInt(parts[0], 10);
     var minute = parseInt(parts[1], 10);
-    if (hour === 24) { hour = 0; }
+    if (isPM && hour !== 12) { hour += 12; }
+    if (isAM && hour === 12) { hour = 0; }
     return { hour: hour, minute: minute };
   }
 
