@@ -48,6 +48,16 @@
     justify-content: space-between;
     flex-wrap: wrap;
     padding: 14px 16px 10px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #111111;
+  }
+
+  .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   h1 {
@@ -61,12 +71,24 @@
     color: #999999;
   }
 
+  .settings-btn {
+    font-size: 18px;
+    cursor: pointer;
+    user-select: none;
+    color: #999999;
+    line-height: 1;
+  }
+
   .legend {
     display: flex;
     flex-wrap: wrap;
     gap: 14px;
     padding: 0 16px 12px 16px;
     border-bottom: 1px solid #2a2a2a;
+    position: sticky;
+    top: 44px;
+    z-index: 19;
+    background: #111111;
   }
 
   .legend-item {
@@ -82,6 +104,50 @@
     border-radius: 50%;
     margin-right: 5px;
     flex-shrink: 0;
+  }
+
+  /* ===================== SETTINGS PANEL ===================== */
+  #settings-panel {
+    display: none;
+    position: fixed;
+    top: 48px;
+    right: 16px;
+    background: #1a1a1a;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 14px 16px;
+    z-index: 1000;
+    font-size: 13px;
+    color: #dddddd;
+    min-width: 220px;
+  }
+
+  #settings-panel.is-open {
+    display: block;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .settings-row label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  #settings-close {
+    margin-top: 2px;
+    padding: 5px 12px;
+    background: #333333;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
   }
 
   /* ===================== AGENDA (mobile fallback) ===================== */
@@ -338,6 +404,104 @@
     margin-top: 8px;
   }
 
+  /* ===================== LIGHT THEME ===================== */
+  body.light-theme,
+  body.light-theme html {
+    background: #f4f4f4;
+    color: #1a1a1a;
+  }
+
+  body.light-theme .top-bar,
+  body.light-theme .legend,
+  body.light-theme .tg-header-row,
+  body.light-theme .tg-allday-row {
+    background: #f4f4f4;
+  }
+
+  body.light-theme .clock {
+    color: #666666;
+  }
+
+  body.light-theme .settings-btn {
+    color: #666666;
+  }
+
+  body.light-theme .legend {
+    border-bottom-color: #dddddd;
+  }
+
+  body.light-theme .legend-item {
+    color: #333333;
+  }
+
+  body.light-theme #settings-panel {
+    background: #ffffff;
+    border-color: #dddddd;
+    color: #222222;
+  }
+
+  body.light-theme #settings-close {
+    background: #e5e5e5;
+    color: #222222;
+  }
+
+  body.light-theme .day-heading {
+    color: #333333;
+    border-bottom-color: #cccccc;
+  }
+
+  body.light-theme .agenda-time {
+    color: #666666;
+  }
+
+  body.light-theme .empty-state {
+    color: #999999;
+  }
+
+  body.light-theme .agenda-row.is-next {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  body.light-theme .agenda-row.is-next .agenda-title,
+  body.light-theme .agenda-row.is-next .agenda-time {
+    color: #000000;
+  }
+
+  body.light-theme .tg-header-row,
+  body.light-theme .tg-allday-row {
+    border-bottom-color: #dddddd;
+  }
+
+  body.light-theme .tg-day-header {
+    color: #333333;
+  }
+
+  body.light-theme .tg-day-header.is-today {
+    background: #dbe9fa;
+    color: #111111;
+  }
+
+  body.light-theme .tg-day-header .dnum {
+    color: #777777;
+  }
+
+  body.light-theme .tg-day-header.is-today .dnum {
+    color: #333333;
+  }
+
+  body.light-theme .tg-hour-label {
+    color: #888888;
+  }
+
+  body.light-theme .tg-day-col {
+    border-left-color: #e2e2e2;
+    background-image: linear-gradient(to bottom, #e2e2e2 1px, transparent 1px);
+  }
+
+  body.light-theme .tg-day-col.is-today {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
   /* ===================== Breakpoints ===================== */
 
   /* Mobile: agenda list only */
@@ -360,7 +524,10 @@
 <div id="calendar-view">
   <div class="top-bar">
     <h1 id="today-heading">Loading...</h1>
-    <div class="clock" id="clock"></div>
+    <div class="top-bar-right">
+      <div class="clock" id="clock"></div>
+      <div class="settings-btn" id="settings-btn" title="Settings">&#9881;</div>
+    </div>
   </div>
 
   <div class="legend" id="legend"></div>
@@ -376,6 +543,22 @@
 <div id="screensaver">
   <div id="screensaver-clock">--:--</div>
   <div id="screensaver-date">Loading...</div>
+</div>
+
+<div id="settings-panel">
+  <div class="settings-row">
+    <label>
+      <input type="checkbox" id="setting-screensaver">
+      Night screensaver (9PM&ndash;5:30AM)
+    </label>
+  </div>
+  <div class="settings-row">
+    <label>
+      <input type="checkbox" id="setting-lightmode">
+      Light mode
+    </label>
+  </div>
+  <button id="settings-close">Close</button>
 </div>
 
 <script>
@@ -394,10 +577,11 @@
   // show a shorter 3-day window. Mobile falls back to the agenda list
   // entirely (see CSS breakpoints) so it isn't handled here.
   //
-  // Set above 1024 deliberately: iPad Mini/Air (9.7" family) report a
-  // landscape width of exactly 1024px, so a threshold AT 1024 would
-  // misclassify landscape iPad as "desktop" and show 7 days instead of 3.
-  var DESKTOP_MIN_WIDTH = 1200;
+  // Set comfortably above 1536 deliberately: that's the iPad Air 1's
+  // resolution, and iPad landscape widths in general (Mini/Air 9.7"
+  // family lands at 1024 CSS px) should never be misclassified as
+  // "desktop" and shown the cramped 7-day view.
+  var DESKTOP_MIN_WIDTH = 1600;
   var DAYS_DESKTOP = 7;
   var DAYS_TABLET = 3;
   var MIN_WIDTH_PER_DAY = 100; // px, used to size the scrollable inner container
@@ -952,9 +1136,59 @@
 
   window.addEventListener("resize", handleResize);
 
+  // ===================== SETTINGS (persisted via localStorage) =====================
+  // Not an artifact/sandbox context - this is a normal deployed webpage,
+  // so localStorage is fine here (and is the simplest way to persist a
+  // per-device display preference across reloads without a backend change).
+  var SETTINGS_KEY = "dashboardSettings";
+  var DEFAULT_SETTINGS = { screensaverEnabled: true, lightMode: false };
+
+  function loadSettings() {
+    try {
+      var raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) { return DEFAULT_SETTINGS; }
+      var parsed = JSON.parse(raw);
+      return {
+        screensaverEnabled: parsed.screensaverEnabled !== undefined ? parsed.screensaverEnabled : true,
+        lightMode: parsed.lightMode !== undefined ? parsed.lightMode : false
+      };
+    } catch (e) {
+      return DEFAULT_SETTINGS;
+    }
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.log("could not save settings", e);
+    }
+  }
+
+  var settings = loadSettings();
+
+  function applyTheme() {
+    document.body.className = settings.lightMode ? "light-theme" : "";
+  }
+
+  function applySettingsToUI() {
+    document.getElementById("setting-screensaver").checked = settings.screensaverEnabled;
+    document.getElementById("setting-lightmode").checked = settings.lightMode;
+  }
+
+  function toggleSettingsPanel() {
+    var panel = document.getElementById("settings-panel");
+    panel.className = (panel.className === "is-open") ? "" : "is-open";
+  }
+
+  function closeSettingsPanel() {
+    document.getElementById("settings-panel").className = "";
+  }
+
   // ===================== SCREENSAVER (overnight idle) =====================
   // Active window: 9:00 PM through 5:30 AM Eastern. Outside that window
   // the screensaver never triggers, no matter how idle the display is.
+  // Can also be disabled entirely via the settings panel.
   var NIGHT_START_MIN = 21 * 60;       // 9:00 PM
   var NIGHT_END_MIN = 5 * 60 + 30;     // 5:30 AM
   var IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -1006,6 +1240,7 @@
   document.addEventListener("keydown", registerInteraction);
 
   function checkIdleForScreensaver() {
+    if (!settings.screensaverEnabled) { return; }
     if (screensaverActive) { return; }
     if (currentlyShowingLiveTrack) { return; } // never screensaver over an active LiveTrack session
     if (isNightWindow() && (Date.now() - lastInteraction) > IDLE_TIMEOUT_MS) {
@@ -1013,7 +1248,25 @@
     }
   }
 
+  // Wire up settings panel controls
+  document.getElementById("settings-btn").addEventListener("click", toggleSettingsPanel);
+  document.getElementById("settings-close").addEventListener("click", closeSettingsPanel);
+
+  document.getElementById("setting-screensaver").addEventListener("change", function (e) {
+    settings.screensaverEnabled = e.target.checked;
+    saveSettings();
+    if (!settings.screensaverEnabled) { hideScreensaver(); }
+  });
+
+  document.getElementById("setting-lightmode").addEventListener("change", function (e) {
+    settings.lightMode = e.target.checked;
+    saveSettings();
+    applyTheme();
+  });
+
   // Initial load
+  applyTheme();
+  applySettingsToUI();
   updateClock();
   fetchCalendarMeta(function () {
     buildLegend();
