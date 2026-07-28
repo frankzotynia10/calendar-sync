@@ -24,6 +24,29 @@ EVENTS_FUTURE_DAYS = int(os.environ.get("EVENTS_FUTURE_DAYS", "14"))
 # the dashboard treats it as inactive even if the DB flag hasn't been flipped yet.
 LIVETRACK_TTL_HOURS = int(os.environ.get("LIVETRACK_TTL_HOURS", "5"))
 
+# CALENDAR_META format: name1=Label One|#color1,name2=Label Two|#color2,...
+# Display label + dot color per source_cal, kept out of the frontend so
+# renaming/recoloring a feed is a config change, not a code change.
+CALENDAR_META_RAW = os.environ.get("CALENDAR_META", "")
+
+DEFAULT_META_COLOR = "#999999"
+DEFAULT_META_LABEL = "Other"
+
+
+def parse_calendar_meta(raw):
+    meta = {}
+    for entry in raw.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        name, rest = entry.split("=", 1)
+        label, color = rest.split("|", 1)
+        meta[name.strip()] = {"label": label.strip(), "color": color.strip()}
+    return meta
+
+
+CALENDAR_META = parse_calendar_meta(CALENDAR_META_RAW)
+
 app = Flask(__name__)
 
 
@@ -75,6 +98,16 @@ def api_events():
         )
 
     return jsonify({"events": events})
+
+
+@app.route("/api/calendar-meta")
+def api_calendar_meta():
+    return jsonify(
+        {
+            "sources": CALENDAR_META,
+            "default": {"label": DEFAULT_META_LABEL, "color": DEFAULT_META_COLOR},
+        }
+    )
 
 
 @app.route("/api/livetrack")
