@@ -140,13 +140,14 @@
   }
 
   .tg-inner {
-    min-width: 480px;
     position: relative;
+    /* min-width and column count are set inline via JS based on
+       how many days are being shown (3 on tablet, 7 on desktop) */
   }
 
   .tg-row {
     display: grid;
-    grid-template-columns: 46px repeat(3, 1fr);
+    /* grid-template-columns set inline via JS to match day count */
   }
 
   .tg-header-row {
@@ -291,7 +292,8 @@
     h1 { font-size: 20px; }
   }
 
-  /* Tablet/desktop: time grid */
+  /* Tablet/desktop: time grid (3 days on tablet, 7 on desktop - see
+     getDaysToShow() in JS, which drives the actual column count) */
   @media (min-width: 768px) {
     #timegrid-view { display: block !important; }
     #agenda-view { display: none !important; }
@@ -328,7 +330,17 @@
   var TOTAL_MIN = (END_HOUR - START_HOUR) * 60;
   var TOTAL_HEIGHT = TOTAL_MIN * PX_PER_MIN;
 
-  var DAYS_TO_SHOW = 3;
+  // Desktop-width viewports show a full week; narrower (tablet) viewports
+  // show a shorter 3-day window. Mobile falls back to the agenda list
+  // entirely (see CSS breakpoints) so it isn't handled here.
+  var DESKTOP_MIN_WIDTH = 1024;
+  var DAYS_DESKTOP = 7;
+  var DAYS_TABLET = 3;
+  var MIN_WIDTH_PER_DAY = 100; // px, used to size the scrollable inner container
+
+  function getDaysToShow() {
+    return (window.innerWidth >= DESKTOP_MIN_WIDTH) ? DAYS_DESKTOP : DAYS_TABLET;
+  }
 
   var SOURCE_META = {};
   var DEFAULT_META = { color: "#999999", label: "Other" };
@@ -427,12 +439,15 @@
     });
   }
 
-  // Builds DAYS_TO_SHOW day buckets: today (Eastern) through +N-1 days
+  // Builds day buckets: today (Eastern) through +N-1 days, where N comes
+  // from getDaysToShow() (re-evaluated on every call, so it responds to
+  // viewport width at render time).
   function buildWeekDays() {
     var days = [];
     var now = new Date();
+    var daysToShow = getDaysToShow();
 
-    for (var i = 0; i < DAYS_TO_SHOW; i++) {
+    for (var i = 0; i < daysToShow; i++) {
       var d = new Date(now.getTime());
       d.setUTCDate(d.getUTCDate() + i);
 
@@ -613,13 +628,17 @@
 
     var days = bucketEvents(events);
     var todayKey = days[0].key;
+    var colTemplate = "46px repeat(" + days.length + ", 1fr)";
+    var innerMinWidth = (46 + days.length * MIN_WIDTH_PER_DAY) + "px";
 
     var inner = document.createElement("div");
     inner.className = "tg-inner";
+    inner.style.minWidth = innerMinWidth;
 
     // Header row (weekday + date per day)
     var headerRow = document.createElement("div");
     headerRow.className = "tg-row tg-header-row";
+    headerRow.style.gridTemplateColumns = colTemplate;
     headerRow.appendChild(document.createElement("div")).className = "tg-gutter-cell";
 
     for (var i = 0; i < days.length; i++) {
@@ -646,6 +665,7 @@
     // All-day strip
     var alldayRow = document.createElement("div");
     alldayRow.className = "tg-row tg-allday-row";
+    alldayRow.style.gridTemplateColumns = colTemplate;
     alldayRow.appendChild(document.createElement("div")).className = "tg-gutter-cell";
 
     for (var j = 0; j < days.length; j++) {
@@ -669,6 +689,7 @@
     // Time-grid body
     var bodyRow = document.createElement("div");
     bodyRow.className = "tg-row tg-body-row";
+    bodyRow.style.gridTemplateColumns = colTemplate;
     bodyRow.appendChild(buildHourGutter());
 
     for (var d = 0; d < days.length; d++) {
@@ -810,6 +831,26 @@
   function tickNowLine() {
     renderTimeGrid(lastEvents);
   }
+
+  // Re-render if the viewport crosses the tablet/desktop day-count
+  // threshold (e.g. resizing a browser window, or rotating a device that
+  // happens to sit right at the boundary). Debounced to avoid thrashing
+  // during a drag-resize.
+  var lastDaysToShow = getDaysToShow();
+  var resizeDebounce = null;
+
+  function handleResize() {
+    if (resizeDebounce) { clearTimeout(resizeDebounce); }
+    resizeDebounce = setTimeout(function () {
+      var newDaysToShow = getDaysToShow();
+      if (newDaysToShow !== lastDaysToShow) {
+        lastDaysToShow = newDaysToShow;
+        renderAll(lastEvents);
+      }
+    }, 250);
+  }
+
+  window.addEventListener("resize", handleResize);
 
   // Initial load
   updateClock();
