@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/frankzotynia10/calendar-sync/main/dashboard/calendar.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/frankzotynia10/calendar-sync/main/dashboard/calendar.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
 <title>Home Dashboard</title>
 <style>
   * {
@@ -389,7 +393,11 @@
   // Desktop-width viewports show a full week; narrower (tablet) viewports
   // show a shorter 3-day window. Mobile falls back to the agenda list
   // entirely (see CSS breakpoints) so it isn't handled here.
-  var DESKTOP_MIN_WIDTH = 1024;
+  //
+  // Set above 1024 deliberately: iPad Mini/Air (9.7" family) report a
+  // landscape width of exactly 1024px, so a threshold AT 1024 would
+  // misclassify landscape iPad as "desktop" and show 7 days instead of 3.
+  var DESKTOP_MIN_WIDTH = 1200;
   var DAYS_DESKTOP = 7;
   var DAYS_TABLET = 3;
   var MIN_WIDTH_PER_DAY = 100; // px, used to size the scrollable inner container
