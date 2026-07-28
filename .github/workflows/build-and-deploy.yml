@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-push:
-    name: Build & Push Image
+    name: Build & Push Images
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,10 +30,20 @@ jobs:
       - name: Build & push calendar-sync
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./sync
+          file: ./sync/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/calendar-sync:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push dashboard
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dashboard
+          file: ./dashboard/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/dashboard:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
