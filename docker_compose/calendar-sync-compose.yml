@@ -1,0 +1,8 @@
+services:
+  calendar-sync:
+    image: ghcr.io/frankzotynia10/calendar-sync:latest
+    container_name: calendar-sync
+    restart: unless-stopped
+    env_file:
+      - /mnt/user/appdata/calendar-sync/.env
+    command: tail -f /dev/null
