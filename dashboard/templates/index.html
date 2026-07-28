@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Home Dashboard</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #111111;
+    color: #f2f2f2;
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  #calendar-view {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    overflow-y: auto;
+  }
+
+  #livetrack-view {
+    display: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  #livetrack-view iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+  }
+
+  .clock {
+    font-size: 16px;
+    color: #999999;
+    margin-bottom: 20px;
+  }
+
+  .day-group {
+    margin-bottom: 24px;
+  }
+
+  .day-heading {
+    font-size: 18px;
+    font-weight: 600;
+    color: #cccccc;
+    border-bottom: 1px solid #333333;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+  }
+
+  .event-row {
+    display: flex;
+    align-items: baseline;
+    padding: 6px 0;
+    font-size: 17px;
+  }
+
+  .event-time {
+    width: 110px;
+    flex-shrink: 0;
+    color: #aaaaaa;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .event-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  .event-title {
+    flex: 1;
+  }
+
+  .empty-state {
+    color: #666666;
+    font-size: 16px;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div id="calendar-view">
+  <h1 id="today-heading">Loading...</h1>
+  <div class="clock" id="clock"></div>
+  <div id="events-container"></div>
+</div>
+
+<div id="livetrack-view">
+  <iframe id="livetrack-frame" src=""></iframe>
+</div>
+
+<script>
+  // Deliberately conservative JS below (no optional chaining, no nullish
+  // coalescing, no arrow-function class fields) to stay compatible with
+  // Safari 12 on older iPads.
+
+  var SOURCE_COLORS = {
+    fz_o365: "#4a90d9",
+    cz_o365: "#d94a90",
+    fz_google: "#4ad97a"
+  };
+
+  var DEFAULT_COLOR = "#999999";
+
+  function getColor(sourceCal) {
+    if (SOURCE_COLORS.hasOwnProperty(sourceCal)) {
+      return SOURCE_COLORS[sourceCal];
+    }
+    return DEFAULT_COLOR;
+  }
+
+  function formatTime(isoString) {
+    var d = new Date(isoString);
+    return d.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  }
+
+  function formatDayHeading(dateObj) {
+    return dateObj.toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      weekday: "long",
+      month: "long",
+      day: "numeric"
+    });
+  }
+
+  function dayKeyForEvent(isoString) {
+    var d = new Date(isoString);
+    // Use the Eastern-time calendar date as the grouping key
+    var parts = d.toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    return parts;
+  }
+
+  function updateClock() {
+    var now = new Date();
+    var clockEl = document.getElementById("clock");
+    var headingEl = document.getElementById("today-heading");
+
+    clockEl.textContent = now.toLocaleTimeString("en-US", {
+      timeZone: "America/New_York",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
+    headingEl.textContent = formatDayHeading(now);
+  }
+
+  function renderEvents(events) {
+    var container = document.getElementById("events-container");
+    container.innerHTML = "";
+
+    if (events.length === 0) {
+      var empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "Nothing on the calendar.";
+      container.appendChild(empty);
+      return;
+    }
+
+    var groups = {};
+    var order = [];
+
+    for (var i = 0; i < events.length; i++) {
+      var ev = events[i];
+      var key = dayKeyForEvent(ev.start_time);
+      if (!groups.hasOwnProperty(key)) {
+        groups[key] = [];
+        order.push(key);
+      }
+      groups[key].push(ev);
+    }
+
+    for (var g = 0; g < order.length; g++) {
+      var dayKey = order[g];
+      var dayEvents = groups[dayKey];
+
+      var dayGroup = document.createElement("div");
+      dayGroup.className = "day-group";
+
+      var heading = document.createElement("div");
+      heading.className = "day-heading";
+      heading.textContent = formatDayHeading(new Date(dayEvents[0].start_time));
+      dayGroup.appendChild(heading);
+
+      for (var j = 0; j < dayEvents.length; j++) {
+        var ev2 = dayEvents[j];
+
+        var row = document.createElement("div");
+        row.className = "event-row";
+
+        var timeEl = document.createElement("div");
+        timeEl.className = "event-time";
+        timeEl.textContent = ev2.all_day ? "All day" : formatTime(ev2.start_time);
+
+        var dot = document.createElement("div");
+        dot.className = "event-dot";
+        dot.style.backgroundColor = getColor(ev2.source_cal);
+
+        var titleEl = document.createElement("div");
+        titleEl.className = "event-title";
+        titleEl.textContent = ev2.title ? ev2.title : "(untitled)";
+
+        row.appendChild(timeEl);
+        row.appendChild(dot);
+        row.appendChild(titleEl);
+        dayGroup.appendChild(row);
+      }
+
+      container.appendChild(dayGroup);
+    }
+  }
+
+  function fetchEvents() {
+    fetch("/api/events")
+      .then(function (resp) { return resp.json(); })
+      .then(function (data) { renderEvents(data.events); })
+      .catch(function (err) { console.log("events fetch failed", err); });
+  }
+
+  var currentlyShowingLiveTrack = false;
+  var currentLiveTrackUrl = null;
+
+  function applyLiveTrackState(active, url) {
+    var calendarView = document.getElementById("calendar-view");
+    var liveTrackView = document.getElementById("livetrack-view");
+    var frame = document.getElementById("livetrack-frame");
+
+    if (active && url) {
+      if (!currentlyShowingLiveTrack || currentLiveTrackUrl !== url) {
+        frame.src = url;
+        currentLiveTrackUrl = url;
+      }
+      calendarView.style.display = "none";
+      liveTrackView.style.display = "block";
+      currentlyShowingLiveTrack = true;
+    } else {
+      if (currentlyShowingLiveTrack) {
+        frame.src = "about:blank";
+        currentLiveTrackUrl = null;
+      }
+      calendarView.style.display = "block";
+      liveTrackView.style.display = "none";
+      currentlyShowingLiveTrack = false;
+    }
+  }
+
+  function fetchLiveTrack() {
+    fetch("/api/livetrack")
+      .then(function (resp) { return resp.json(); })
+      .then(function (data) { applyLiveTrackState(data.active, data.url); })
+      .catch(function (err) { console.log("livetrack fetch failed", err); });
+  }
+
+  // Initial load
+  updateClock();
+  fetchEvents();
+  fetchLiveTrack();
+
+  // Refresh intervals
+  setInterval(updateClock, 1000);
+  setInterval(fetchEvents, 5 * 60 * 1000);
+  setInterval(fetchLiveTrack, 30 * 1000);
+</script>
+
+</body>
+</html>
